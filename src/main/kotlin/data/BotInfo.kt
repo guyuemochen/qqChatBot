@@ -3,8 +3,8 @@ package mirai.guyuemochen.chatbot.data
 import kotlinx.coroutines.*
 
 import mirai.guyuemochen.chatbot.classes.RWData
-import mirai.guyuemochen.chatbot.messages.RandomPic
 import mirai.guyuemochen.chatbot.classes.Constants
+import mirai.guyuemochen.chatbot.classes.Messages
 
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.Contact.Companion.uploadImage
@@ -12,13 +12,21 @@ import net.mamoe.mirai.contact.Group
 
 import java.io.FileInputStream
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 import kotlin.io.path.exists
 
+/** 储存bot的详细信息
+ *
+ * @author 古月莫辰
+ *
+ * @param botPath 储存bot信息的json文件路径
+ * @param bot net.mamoe.mirai.Bot类型
+ * @param pluginPath 插件信息
+ */
 class BotInfo(
-    botPath: Path,
+    bot: Bot,
     private val pluginPath: Path,
-    private val bot: Bot
 ) {
     private var botId: Long = 0
     private var owner: Long = 0
@@ -26,12 +34,22 @@ class BotInfo(
 
     // 初始化：载入数据
     init {
+        load(bot)
+    }
+
+    /**
+     * 初始化函数，减少mem空间
+     *
+     * @param bot mirai机器人
+     */
+    private fun load(bot: Bot){
+        val botPath = Path("${pluginPath}/${bot.id}")
         if(!botPath.exists()){
             // 若不存在则新建文件
         }
         else{
             // 若存在则从现有文件中读取
-            readJson(botPath)
+            readJson(botPath, bot)
         }
     }
 
@@ -39,15 +57,20 @@ class BotInfo(
      * 获取当前json文件并转化为class形式
      *
      * @param botPath 当前bot所在文件地址
+     * @param bot 当前的bot
      */
-    private fun readJson(botPath: Path){
+    private fun readJson(botPath: Path, bot: Bot){
         val botInfo = BotJson().getInfo(botPath)
+        // 保存bot的qq号
         this.botId = botInfo.id
+        // 保存bot的主人
         this.owner = botInfo.owner
+        // 循环填充group信息
         for (groupInfo in botInfo.groups){
             try{
                 // 获取group
                 val group = bot.getGroupOrFail(groupInfo.groupId)
+                // 填充group信息
                 groupInfoList.add(
                     GroupInfo(
                         groupInfo.groupId,
@@ -85,7 +108,7 @@ class BotInfo(
                         "$pluginPath/image/randoms/" + pictures.shuffled()[0]
                     )
                 )
-                group.sendMessage(RandomPic.sendPictureOnly(image))
+                group.sendMessage(Messages.RandomPic.sendPictureOnly(image))
             }
         }
 
