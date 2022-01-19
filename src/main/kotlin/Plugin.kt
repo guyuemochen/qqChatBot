@@ -16,6 +16,11 @@ import mirai.guyuemochen.chatbot.data.BotInfo
 
 import net.mamoe.mirai.event.events.BotOnlineEvent
 
+/**
+ * plugin的main文件
+ *
+ * @author 古月漠尘
+ */
 object Plugin : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.guyuemochen.chatbot.plugin",
@@ -37,10 +42,8 @@ object Plugin : KotlinPlugin(
         // 机器人登录事件
         eventChannel.subscribeAlways<BotOnlineEvent> {
             // 加载json文件
-            // 获取储存该bot的文件夹
-            val botPath = Path("${dataFolderPath}/${this.bot.id}")
             // 获取数据
-            bots.add(BotInfo(botPath, dataFolderPath, this.bot))
+            bots.add(BotInfo(this.bot, dataFolderPath))
         }
     }
 }
