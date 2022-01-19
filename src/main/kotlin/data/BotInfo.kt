@@ -1,9 +1,6 @@
 package mirai.guyuemochen.chatbot.data
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 import mirai.guyuemochen.chatbot.classes.RWData
 import mirai.guyuemochen.chatbot.messages.RandomPic
@@ -30,19 +27,26 @@ class BotInfo(
     // 初始化：载入数据
     init {
         if(!botPath.exists()){
-
+            // 若不存在则新建文件
         }
         else{
+            // 若存在则从现有文件中读取
             readJson(botPath)
         }
     }
 
+    /**
+     * 获取当前json文件并转化为class形式
+     *
+     * @param botPath 当前bot所在文件地址
+     */
     private fun readJson(botPath: Path){
         val botInfo = BotJson().getInfo(botPath)
         this.botId = botInfo.id
         this.owner = botInfo.owner
         for (groupInfo in botInfo.groups){
             try{
+                // 获取group
                 val group = bot.getGroupOrFail(groupInfo.groupId)
                 groupInfoList.add(
                     GroupInfo(
@@ -54,14 +58,24 @@ class BotInfo(
                 )
             }
             catch (e: NoSuchElementException){
+                // 当出现群组不存在时跳过
                 continue
             }
         }
     }
 
+    /**
+     * 创建新的task
+     *
+     * @param delayTime 延迟时间
+     * @param group 当前bot所在组
+     * @param type 防冷群类型
+     *
+     * @return 设定好的task
+     */
     private fun newTask(delayTime: Long, group: Group, type: Int): Job? {
         // 检测设定类型
-        if (type == Constants.randomType.answerAfterDelay){
+        if (type == Constants.RandomType.answerAfterDelay){
             return GlobalScope.launch{
                 delay(delayTime)
                 val pictures = RWData.getFiles("$pluginPath/image/randoms")
@@ -71,13 +85,21 @@ class BotInfo(
                         "$pluginPath/image/randoms/" + pictures.shuffled()[0]
                     )
                 )
-                group.sendMessage(RandomPic.randomPicture(image))
+                group.sendMessage(RandomPic.sendPictureOnly(image))
             }
         }
 
         return null
     }
 
+    /**
+     * GroupInfo储存群组信息
+     *
+     * @param id 群号
+     * @param task 定时发阿宋消息的任务
+     * @param randomDelay 防冷群延迟
+     * @param randomType 防冷群类型
+     */
     class GroupInfo(
         val id: Long,
         var task: Job?,
