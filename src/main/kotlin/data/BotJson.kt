@@ -11,7 +11,12 @@ import kotlinx.serialization.json.JsonTransformingSerializer
 import mirai.guyuemochen.chatbot.classes.RWData
 import java.nio.file.Path
 
-class BotJson {
+/**
+ * 读写存储bot信息的json文件
+ *
+ * @author 古月漠尘
+ */
+object BotJson {
 
     object GroupListSerializer : JsonTransformingSerializer<List<GroupInfo>>(ListSerializer(GroupInfo.serializer())) {
         // If response is not an array, then it is a single object that should be wrapped into the array
@@ -28,26 +33,45 @@ class BotJson {
         var groups: List<GroupInfo>
     )
 
+    /**
+     * 储存group信息
+     *
+     * @param groupId 群号
+     * @param randomType 随机发图类型
+     * @param randomDelay 随机发图延迟
+     * @param status bot状态
+     * @param welcomeText 欢迎词
+     */
     @Serializable
     data class GroupInfo(
-        // 群id
         val groupId: Long,
-        // 随机发图类型
         var randomType: Int,
-        // 随机发图延迟
         var randomDelay: Long,
-        // bot状态
-        var status: String,
-        // 欢迎词
-        var welcomeText: String
+        var status: Int,
+        var welcomeText: String,
     )
 
-    fun getInfo(botPath: Path): BaseInfo{
-        return Json.decodeFromString(RWData().readTxtFile(botPath, "botInfo.json"))
+    /**
+     * 提取json文件中的信息并放回
+     *
+     * @param path 文件路径
+     * @param filename 文件名称
+     *
+     * @return 以json格式返回bot信息
+     */
+    fun getInfo(path: Path, filename: String): BaseInfo{
+        return Json.decodeFromString(RWData.readTxtFile(path, filename))
     }
 
-    fun inputInfo(botPath: Path, botInfo: BaseInfo){
-        RWData().writeTxtFile(Json.encodeToString(botInfo), botPath, "botInfo.json", false)
+    /**
+     * 输入到json文件
+     *
+     * @param path 文件路径
+     * @param botInfo json格式的文件
+     * @param filename 文件名称
+     */
+    fun inputInfo(path: Path, botInfo: BaseInfo, filename: String){
+        RWData.writeTxtFile(Json.encodeToString(botInfo), path, filename, false)
     }
 
 }
