@@ -32,4 +32,10 @@ object Constants {
 
     }
 
+    object FileNames{
+
+        const val botInfo = "botInfo.json"
+
+    }
+
 }
