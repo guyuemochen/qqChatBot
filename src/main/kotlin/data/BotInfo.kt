@@ -20,7 +20,6 @@ import kotlin.io.path.exists
  *
  * @author 古月莫辰
  *
- * @param botPath 储存bot信息的json文件路径
  * @param bot net.mamoe.mirai.Bot类型
  * @param pluginPath 插件信息
  */
@@ -28,7 +27,7 @@ class BotInfo(
     bot: Bot,
     private val pluginPath: Path,
 ) {
-    private var botId: Long = 0
+    var botId: Long = 0
     private var owner: Long = 0
     private val groupInfoList: MutableList<GroupInfo> = mutableListOf()
 
@@ -46,10 +45,35 @@ class BotInfo(
         val botPath = Path("${pluginPath}/${bot.id}")
         if(!botPath.exists()){
             // 若不存在则新建文件
+            createInfo(bot)
         }
         else{
             // 若存在则从现有文件中读取
             readJson(botPath, bot)
+        }
+    }
+
+    /**
+     * 初始化所有group信息
+     *
+     * @param bot 当前的bot
+     */
+    private fun createInfo(bot: Bot){
+        // 获取当前bot信息
+        this.botId = bot.id
+        // 将当前bot主人设置为空
+        this.owner = 0
+        for (group in bot.groups){
+            this.groupInfoList.add(
+                GroupInfo(
+                    group.id,
+                    newTask(Constants.GroupDataDefault.randomDelay, group, Constants.GroupDataDefault.randomType),
+                    Constants.GroupDataDefault.randomDelay,
+                    Constants.GroupDataDefault.randomType,
+                    Constants.BotStatus.on,
+                    ""
+                )
+            )
         }
     }
 
@@ -60,7 +84,7 @@ class BotInfo(
      * @param bot 当前的bot
      */
     private fun readJson(botPath: Path, bot: Bot){
-        val botInfo = BotJson().getInfo(botPath)
+        val botInfo = BotJson.getInfo(botPath, Constants.FileNames.botInfo)
         // 保存bot的qq号
         this.botId = botInfo.id
         // 保存bot的主人
@@ -71,12 +95,14 @@ class BotInfo(
                 // 获取group
                 val group = bot.getGroupOrFail(groupInfo.groupId)
                 // 填充group信息
-                groupInfoList.add(
+                this.groupInfoList.add(
                     GroupInfo(
                         groupInfo.groupId,
                         newTask(groupInfo.randomDelay, group, groupInfo.randomType),
                         groupInfo.randomDelay,
                         groupInfo.randomType,
+                        groupInfo.status,
+                        groupInfo.welcomeText,
                     )
                 )
             }
@@ -85,6 +111,86 @@ class BotInfo(
                 continue
             }
         }
+    }
+
+    /**
+     * 保存当前所有bot信息
+     */
+    fun saveData(){
+        val group: MutableList<BotJson.GroupInfo> = mutableListOf()
+        // 保存所有群组信息
+        for (groupInfo in this.groupInfoList){
+            group.add(
+                BotJson.GroupInfo(
+                    groupId = groupInfo.id,
+                    randomType = groupInfo.randomType,
+                    randomDelay = groupInfo.randomDelay,
+                    status = groupInfo.status,
+                    welcomeText = groupInfo.welcomeText,
+                )
+            )
+        }
+        // 保存所有信息
+        val botjson = BotJson.BaseInfo(
+            id = this.botId,
+            owner = this.owner,
+            groups = group,
+        )
+
+        // 保存信息
+        BotJson.inputInfo(Path("${pluginPath}/${this.botId}"), botjson, Constants.FileNames.botInfo)
+    }
+
+    /**
+     * 重置对应group的task
+     *
+     * @param group 当前所在群组
+     *
+     * @return 返回bot在该群的randomType
+     */
+    fun refreshTask(group: Group){
+
+        val groupInfoIndex = findGroupIndexById(group.id, this.groupInfoList)
+        if (this.groupInfoList[groupInfoIndex].randomType == Constants.RandomType.answerAfterDelay){
+            // 取消当前任务
+            this.groupInfoList[groupInfoIndex].task?.cancel()
+            // 添加新的任务
+            this.groupInfoList[groupInfoIndex].task = newTask(
+                this.groupInfoList[groupInfoIndex].randomDelay,
+                group,
+                this.groupInfoList[groupInfoIndex].randomType
+            )
+        }
+    }
+
+    /**
+     * 从所有群信息中找到对应groupInfo的Index
+     *
+     * @param groupId 群号
+     * @param groupInfoList 所有群信息
+     *
+     * @return 返回对应群信息。若找不到则返回-1
+     */
+    private fun findGroupIndexById(groupId: Long, groupInfoList: MutableList<GroupInfo>): Int{
+
+        if (groupInfoList.size == 1){
+            if (groupInfoList[0].id == groupId) {
+                return 0
+            }
+        }
+        else if(groupInfoList.size > 1){
+            val leftIndex = findGroupIndexById(groupId, groupInfoList.subList(0, groupInfoList.size/2))
+            if (leftIndex != -1){
+                return leftIndex
+            }
+
+            val rightIndex = findGroupIndexById(groupId, groupInfoList.subList(groupInfoList.size/2, groupInfoList.size))
+            if (rightIndex != -1){
+                return rightIndex + groupInfoList.size/2
+            }
+        }
+        return -1
+
     }
 
     /**
@@ -111,7 +217,6 @@ class BotInfo(
                 group.sendMessage(Messages.RandomPic.sendPictureOnly(image))
             }
         }
-
         return null
     }
 
@@ -128,5 +233,7 @@ class BotInfo(
         var task: Job?,
         var randomDelay: Long,
         var randomType: Int,
+        var status: Int,
+        var welcomeText: String,
     )
 }
