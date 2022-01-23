@@ -71,7 +71,7 @@ class BotInfo(
                     Constants.GroupDataDefault.randomDelay,
                     Constants.GroupDataDefault.randomType,
                     Constants.BotStatus.on,
-                    ""
+                    Constants.GroupDataDefault.welcomeText,
                 )
             )
         }
