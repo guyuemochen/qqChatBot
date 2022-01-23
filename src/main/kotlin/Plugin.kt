@@ -1,20 +1,22 @@
 package mirai.guyuemochen.chatbot
 
+import mirai.guyuemochen.chatbot.classes.ChatMessage.at
 import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugin.name
 import net.mamoe.mirai.console.plugin.version
 import net.mamoe.mirai.event.GlobalEventChannel
-import net.mamoe.mirai.utils.info
 
 // 导入本地class
 import mirai.guyuemochen.chatbot.classes.Constants
+import mirai.guyuemochen.chatbot.classes.Messages
 import mirai.guyuemochen.chatbot.data.BotInfo
 import net.mamoe.mirai.event.events.BotOfflineEvent
 
 import net.mamoe.mirai.event.events.BotOnlineEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.utils.info
 
 /**
  * plugin的main文件
@@ -56,16 +58,31 @@ object Plugin : KotlinPlugin(
             }
         }
 
-        eventChannel.subscribeAlways<GroupMessageEvent> {
+        eventChannel.subscribeAlways<GroupMessageEvent> { // 群组消息
             val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
             // 更新当前群组task，若为定时发送则无需更新
             botInfoList[botInfoIndex].refreshTask(this.group)
+
+            var message = this.message.serializeToMiraiCode()
+            if (message.startsWith(at(this.bot.id))){
+                message = message.replaceFirst(at(this.bot.id), "")
+            }
+            else if(message.contains(at(this.bot.id))){
+                return@subscribeAlways
+            }
+
+            if (message.startsWith(".") || message.startsWith("。")){
+                val msgList = message.split(" ")
+                val send = Messages.Command.recieveCommand(msgList)
+                if (send != null){
+                    group.sendMessage(send)
+                }
+            }
+
         }
     }
 
-    /**
-     * 插件卸载时
-     */
+    // 插件卸载时
     override fun onDisable() {
         super.onDisable()
         logger.info{ "Plugin:${this.name}, id:${this.id}, version:${this.version} disabled." }
