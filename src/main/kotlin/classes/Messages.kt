@@ -1,6 +1,9 @@
 package mirai.guyuemochen.chatbot.classes
 
+import mirai.guyuemochen.chatbot.commands.BaseCommand
+import mirai.guyuemochen.chatbot.commands.Help
 import net.mamoe.mirai.message.data.Image
+import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
 
 /**
@@ -26,5 +29,23 @@ object Messages {
         }
 
     }
+
+    object Command{
+
+        private val commandClasses = BaseCommand().commandClasses
+
+        fun recieveCommand(msgList: List<String>): MessageChain? {
+            for (command in commandClasses){
+                if (msgList[0] == ("." + command.cmd) || msgList[0] == ("。" + command.cmd)){
+                    return command.runCommand(msgList)
+                }
+            }
+
+            return null
+        }
+
+    }
+
+
 
 }
