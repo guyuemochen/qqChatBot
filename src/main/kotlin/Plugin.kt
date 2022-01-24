@@ -79,6 +79,8 @@ object Plugin : KotlinPlugin(
                 }
             }
         }
+
+        /*
         // 好友消息事件
         eventChannel.subscribeAlways<FriendMessageEvent> {
             // 获取当前bot全部信息
@@ -100,6 +102,7 @@ object Plugin : KotlinPlugin(
                 }
             }
         }
+        */
         // 机器人加群事件
         eventChannel.subscribeAlways<BotJoinGroupEvent> {
 

@@ -1,7 +1,6 @@
 package mirai.guyuemochen.chatbot.classes
 
-import mirai.guyuemochen.chatbot.classes.commands.Help
-import mirai.guyuemochen.chatbot.classes.commands.Owner
+import mirai.guyuemochen.chatbot.classes.commands.*
 import mirai.guyuemochen.chatbot.data.BotInfo
 import net.mamoe.mirai.message.data.Image
 import net.mamoe.mirai.message.data.buildMessageChain
@@ -35,6 +34,7 @@ object Messages {
         private val commandClasses = listOf(
             Help(),
             Owner(),
+            Random(),
         )
 
         fun receiveCommand(msgList: List<String>, botInfo: BotInfo): String? {

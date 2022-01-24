@@ -1,13 +1,14 @@
 package mirai.guyuemochen.chatbot.classes
 
 import mirai.guyuemochen.chatbot.data.BotInfo
+import mirai.guyuemochen.chatbot.data.CmdDescription
 
 open class BaseCommand {
 
     open val minLength: Int = -1
     open val maxLength: Int = -1
     open val cmd: String = ""
-    open val description: String = "this is a base description"
+    open val description: CmdDescription? = null
     open val errorCommand = "输入错误，请重新输入或查看help指令"
     open val commandNotExist = "当前指令不存在"
 
@@ -39,7 +40,10 @@ open class BaseCommand {
      * @return 反馈
      */
     open fun help(msgList: List<String>): String{
-        return "this is a base command helper"
+        if (description != null && description!!.getDepth() >= (msgList.size - 1)){
+            return description!!.getDescription(msgList.size - 1, msgList)
+        }
+        return errorCommand
     }
 
     /**

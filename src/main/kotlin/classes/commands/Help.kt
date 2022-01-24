@@ -2,6 +2,7 @@ package mirai.guyuemochen.chatbot.classes.commands
 
 import mirai.guyuemochen.chatbot.classes.BaseCommand
 import mirai.guyuemochen.chatbot.data.BotInfo
+import mirai.guyuemochen.chatbot.data.CmdDescription
 import net.mamoe.mirai.message.data.buildMessageChain
 import kotlin.math.min
 
@@ -14,7 +15,10 @@ class Help: BaseCommand() {
 
     override val minLength: Int = 1
     override val cmd: String = "help"
-    override val description: String = "列出所有的指令"
+    override val description = CmdDescription(
+        cmd="help",
+        description=".help 查询指令用法"
+    )
 
     /**
      * 运行help类型语句
@@ -26,6 +30,7 @@ class Help: BaseCommand() {
         val commandClasses: List<BaseCommand> = listOf(
             Help(),
             Owner(),
+            Random(),
         )
 
         if (checkCommandSize(msgList.size)){
@@ -57,17 +62,6 @@ class Help: BaseCommand() {
         }
 
         return errorCommand
-    }
-
-    /**
-     * @see BaseCommand.help
-     */
-    override fun help(msgList: List<String>): String {
-        if (msgList.size > 2){
-            return commandNotExist
-        }
-
-        return description
     }
 
     /**
