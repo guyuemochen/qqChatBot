@@ -12,11 +12,10 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import mirai.guyuemochen.chatbot.classes.Constants
 import mirai.guyuemochen.chatbot.classes.Messages
 import mirai.guyuemochen.chatbot.data.BotInfo
-import net.mamoe.mirai.event.events.BotOfflineEvent
+import net.mamoe.mirai.event.events.*
 
-import net.mamoe.mirai.event.events.BotOnlineEvent
-import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.utils.info
+import java.lang.IllegalArgumentException
 
 /**
  * plugin的main文件
@@ -48,7 +47,7 @@ object Plugin : KotlinPlugin(
             // 获取数据
             botInfoList.add(BotInfo(this.bot, dataFolderPath))
         }
-
+        // 机器人下线事件
         eventChannel.subscribeAlways<BotOfflineEvent> {
             val botInfo = getBotInfoById(this.bot.id, botInfoList)
             if (botInfo != null){
@@ -57,11 +56,12 @@ object Plugin : KotlinPlugin(
                 botInfoList.remove(botInfo)
             }
         }
-
+        // 群组消息事件
         eventChannel.subscribeAlways<GroupMessageEvent> { // 群组消息
             val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
+            val botInfo = botInfoList[botInfoIndex]
             // 更新当前群组task，若为定时发送则无需更新
-            botInfoList[botInfoIndex].refreshTask(this.group)
+            botInfo.refreshTask(this.group)
 
             var message = this.message.serializeToMiraiCode()
             if (message.startsWith(at(this.bot.id))){
@@ -73,12 +73,57 @@ object Plugin : KotlinPlugin(
 
             if (message.startsWith(".") || message.startsWith("。")){
                 val msgList = message.split(" ")
-                val send = Messages.Command.recieveCommand(msgList)
+                val send = Messages.Command.receiveCommand(msgList, botInfo)
                 if (send != null){
                     group.sendMessage(send)
                 }
             }
+        }
+        // 好友消息事件
+        eventChannel.subscribeAlways<FriendMessageEvent> {
+            // 获取当前bot全部信息
+            val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
+            val botInfo = botInfoList[botInfoIndex]
 
+            val message = this.message.serializeToMiraiCode()
+            if (message.startsWith(".") || message.startsWith("。")){
+                val msgList = message.split(" ")
+                val send = Messages.Command.receiveCommand(msgList, botInfo)
+                logger.info{ send.toString() }
+                if (send != null){
+                    try{
+                        friend.sendMessage(send)
+                    }
+                    catch (e: IllegalArgumentException){
+                        logger.info{ "出现错误" }
+                    }
+                }
+            }
+        }
+        // 机器人加群事件
+        eventChannel.subscribeAlways<BotJoinGroupEvent> {
+
+            val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
+            val botInfo = botInfoList[botInfoIndex]
+
+            // 将新群导入至库中
+            botInfo.addNewGroup(this.group)
+
+            // 向机器人主人发送消息
+            bot.getFriend(botInfo.owner)?.sendMessage("已加入新群${this.group.name}(${this.group.id})")
+
+        }
+        // 机器人退群事件
+        eventChannel.subscribeAlways<BotLeaveEvent> {
+            val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
+            val botInfo = botInfoList[botInfoIndex]
+
+            botInfo.removeGroup(this.group)
+            bot.getFriend(botInfo.owner)?.sendMessage("已离开群${this.group.name}(${this.group.id})")
+        }
+
+        eventChannel.subscribeAlways<BotInvitedJoinGroupRequestEvent> {
+            this.accept()
         }
     }
 

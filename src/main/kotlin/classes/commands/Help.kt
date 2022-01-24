@@ -1,16 +1,20 @@
-package mirai.guyuemochen.chatbot.commands
+package mirai.guyuemochen.chatbot.classes.commands
 
-import net.mamoe.mirai.message.data.MessageChain
+import mirai.guyuemochen.chatbot.classes.BaseCommand
+import mirai.guyuemochen.chatbot.data.BotInfo
 import net.mamoe.mirai.message.data.buildMessageChain
 import kotlin.math.min
 
+/**
+ * .help指令
+ *
+ * @see BaseCommand
+ */
 class Help: BaseCommand() {
 
     override val minLength: Int = 1
     override val cmd: String = "help"
     override val description: String = "列出所有的指令"
-
-    private val pageSize: Int = (commandClasses.size - 1) / 5 + 1
 
     /**
      * 运行help类型语句
@@ -18,12 +22,16 @@ class Help: BaseCommand() {
      * @param msgList 拆分成List的指令
      * @return 返回反馈
      */
-    override fun runCommand(msgList: List<String>): MessageChain? {
+    override fun runCommand(msgList: List<String>, botInfo: BotInfo): String  {
+        val commandClasses: List<BaseCommand> = listOf(
+            Help(),
+            Owner(),
+        )
 
         if (checkCommandSize(msgList.size)){
 
             if (msgList.size == 1){
-                return buildMessageChain { listAllCommands(1) }
+                return listAllCommands(1)
             }
             else if (msgList.size > 1){
                 for (command in commandClasses){
@@ -45,18 +53,21 @@ class Help: BaseCommand() {
 
             }
 
-            return null
+            return errorCommand
         }
 
         return errorCommand
     }
 
-    override fun help(msgList: List<String>): MessageChain {
+    /**
+     * @see BaseCommand.help
+     */
+    override fun help(msgList: List<String>): String {
         if (msgList.size > 2){
-            return buildMessageChain { commandNotExist }
+            return commandNotExist
         }
 
-        return buildMessageChain { description }
+        return description
     }
 
     /**
@@ -66,6 +77,12 @@ class Help: BaseCommand() {
      * @return 返回当前页码所有代码的信息
      */
     private fun listAllCommands(page: Int): String{
+
+        val commandClasses: List<BaseCommand> = listOf(
+            Help(),
+            Owner(),
+        )
+        val pageSize: Int = commandClasses.size / 5 + 1
 
         var message = ""
         return if (pageSize < page){

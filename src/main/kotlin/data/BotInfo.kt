@@ -12,6 +12,8 @@ import net.mamoe.mirai.contact.Group
 
 import java.io.FileInputStream
 import java.nio.file.Path
+import java.util.*
+import kotlin.NoSuchElementException
 import kotlin.io.path.Path
 
 import kotlin.io.path.exists
@@ -24,11 +26,11 @@ import kotlin.io.path.exists
  * @param pluginPath 插件信息
  */
 class BotInfo(
-    bot: Bot,
+    val bot: Bot,
     private val pluginPath: Path,
 ) {
     var botId: Long = 0
-    private var owner: Long = 0
+    var owner: Long = 0
     private val groupInfoList: MutableList<GroupInfo> = mutableListOf()
 
     // 初始化：载入数据
@@ -64,16 +66,7 @@ class BotInfo(
         // 将当前bot主人设置为空
         this.owner = 0
         for (group in bot.groups){
-            this.groupInfoList.add(
-                GroupInfo(
-                    group.id,
-                    newTask(Constants.GroupDataDefault.randomDelay, group, Constants.GroupDataDefault.randomType),
-                    Constants.GroupDataDefault.randomDelay,
-                    Constants.GroupDataDefault.randomType,
-                    Constants.BotStatus.on,
-                    Constants.GroupDataDefault.welcomeText,
-                )
-            )
+            addNewGroup(group)
         }
     }
 
@@ -95,22 +88,76 @@ class BotInfo(
                 // 获取group
                 val group = bot.getGroupOrFail(groupInfo.groupId)
                 // 填充group信息
+                val task = newTask(group)
                 this.groupInfoList.add(
                     GroupInfo(
                         groupInfo.groupId,
-                        newTask(groupInfo.randomDelay, group, groupInfo.randomType),
+                        task,
                         groupInfo.randomDelay,
                         groupInfo.randomType,
                         groupInfo.status,
                         groupInfo.welcomeText,
                     )
                 )
+                if (groupInfo.randomType == Constants.RandomType.answerAfterDelay){
+                    Timer().schedule(task, groupInfo.randomDelay)
+                }
+                else if(groupInfo.randomType == Constants.RandomType.repeatConstantDelay){
+                    Timer().schedule(task, Date(), groupInfo.randomDelay)
+                }
             }
             catch (e: NoSuchElementException){
                 // 当出现群组不存在时跳过
                 continue
             }
         }
+
+        checkGroups()
+    }
+
+    private fun checkGroups(){
+
+        for (group in bot.groups){
+
+            if (findGroupIndexById(group.id, groupInfoList) == -1){
+                addNewGroup(group)
+            }
+
+        }
+
+    }
+
+    /**
+     * 添加新的群
+     *
+     * @param group 新的群信息
+     */
+    fun addNewGroup(group: Group){
+        val task = newTask(group)
+        this.groupInfoList.add(
+            GroupInfo(
+                group.id,
+                task,
+                Constants.GroupDataDefault.randomDelay,
+                Constants.GroupDataDefault.randomType,
+                Constants.BotStatus.on,
+                Constants.GroupDataDefault.welcomeText,
+            )
+        )
+        Timer().schedule(task, Constants.GroupDataDefault.randomDelay)
+    }
+
+    /**
+     * 移除群组
+     *
+     * @param group 群组信息
+     */
+    fun removeGroup(group: Group){
+
+        val groupInfo = this.groupInfoList[findGroupIndexById(group.id, groupInfoList)]
+        groupInfo.task?.cancel()
+        groupInfoList.remove(groupInfo)
+
     }
 
     /**
@@ -151,16 +198,15 @@ class BotInfo(
     fun refreshTask(group: Group){
 
         val groupInfoIndex = findGroupIndexById(group.id, this.groupInfoList)
-        if (this.groupInfoList[groupInfoIndex].randomType == Constants.RandomType.answerAfterDelay){
+        val groupInfo = this.groupInfoList[groupInfoIndex]
+        if (groupInfo.randomType == Constants.RandomType.answerAfterDelay){
             // 取消当前任务
-            this.groupInfoList[groupInfoIndex].task?.cancel()
+            groupInfo.task?.cancel()
             // 添加新的任务
-            this.groupInfoList[groupInfoIndex].task = newTask(
-                this.groupInfoList[groupInfoIndex].randomDelay,
-                group,
-                this.groupInfoList[groupInfoIndex].randomType
-            )
+            groupInfo.task = newTask(group)
+            Timer().schedule(groupInfo.task, groupInfo.randomDelay)
         }
+
     }
 
     /**
@@ -196,28 +242,12 @@ class BotInfo(
     /**
      * 创建新的task
      *
-     * @param delayTime 延迟时间
      * @param group 当前bot所在组
-     * @param type 防冷群类型
      *
      * @return 设定好的task
      */
-    private fun newTask(delayTime: Long, group: Group, type: Int): Job? {
-        // 检测设定类型
-        if (type == Constants.RandomType.answerAfterDelay){
-            return GlobalScope.launch{
-                delay(delayTime)
-                val pictures = RWData.getFiles("$pluginPath/image/randoms")
-                // 根据指定路径寻找随机图片
-                val image = group.uploadImage(
-                    FileInputStream(
-                        "$pluginPath/image/randoms/" + pictures.shuffled()[0]
-                    )
-                )
-                group.sendMessage(Messages.RandomPic.sendPictureOnly(image))
-            }
-        }
-        return null
+    private fun newTask(group: Group): SendPic? {
+        return SendPic(group, pluginPath)
     }
 
     /**
@@ -230,10 +260,30 @@ class BotInfo(
      */
     class GroupInfo(
         val id: Long,
-        var task: Job?,
+        var task: SendPic?,
         var randomDelay: Long,
         var randomType: Int,
         var status: Int,
         var welcomeText: String,
     )
+
+    class SendPic(private val group: Group, private val pluginPath: Path): TimerTask(){
+
+        override fun run(){
+
+            GlobalScope.launch{
+                val pictures = RWData.getFiles("$pluginPath/image/randoms")
+                // 根据指定路径寻找随机图片
+                val image = group.uploadImage(
+                    FileInputStream(
+                        "$pluginPath/image/randoms/" + pictures.shuffled()[0]
+                    )
+                )
+                group.sendMessage(Messages.RandomPic.sendPictureOnly(image))
+            }
+
+
+        }
+
+    }
 }

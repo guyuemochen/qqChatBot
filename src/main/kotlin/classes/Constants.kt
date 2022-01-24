@@ -12,7 +12,7 @@ object Constants {
 
     object GroupDataDefault {
 
-        const val randomDelay: Long = 3600000 // 一小时
+        const val randomDelay: Long = 900000 // 一小时
         const val randomType = RandomType.answerAfterDelay // 默认为跟在最后
         const val welcomeText = "欢迎@入群" // 默认欢迎词
 

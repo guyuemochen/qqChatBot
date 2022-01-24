@@ -1,9 +1,9 @@
 package mirai.guyuemochen.chatbot.classes
 
-import mirai.guyuemochen.chatbot.commands.BaseCommand
-import mirai.guyuemochen.chatbot.commands.Help
+import mirai.guyuemochen.chatbot.classes.commands.Help
+import mirai.guyuemochen.chatbot.classes.commands.Owner
+import mirai.guyuemochen.chatbot.data.BotInfo
 import net.mamoe.mirai.message.data.Image
-import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
 
 /**
@@ -32,16 +32,19 @@ object Messages {
 
     object Command{
 
-        private val commandClasses = BaseCommand().commandClasses
+        private val commandClasses = listOf(
+            Help(),
+            Owner(),
+        )
 
-        fun recieveCommand(msgList: List<String>): MessageChain? {
+        fun receiveCommand(msgList: List<String>, botInfo: BotInfo): String? {
             for (command in commandClasses){
                 if (msgList[0] == ("." + command.cmd) || msgList[0] == ("。" + command.cmd)){
-                    return command.runCommand(msgList)
+                    return command.runCommand(msgList, botInfo)
                 }
             }
 
-            return null
+            return "输入错误，请重新输入或查看help指令"
         }
 
     }
