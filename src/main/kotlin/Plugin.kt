@@ -12,6 +12,8 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import mirai.guyuemochen.chatbot.classes.Constants
 import mirai.guyuemochen.chatbot.classes.Messages
 import mirai.guyuemochen.chatbot.data.BotInfo
+import net.mamoe.mirai.console.util.ContactUtils.getFriendOrGroup
+import net.mamoe.mirai.contact.MemberPermission
 import net.mamoe.mirai.event.events.*
 
 import net.mamoe.mirai.utils.info
@@ -60,8 +62,7 @@ object Plugin : KotlinPlugin(
         eventChannel.subscribeAlways<GroupMessageEvent> { // 群组消息
             val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
             val botInfo = botInfoList[botInfoIndex]
-            // 更新当前群组task，若为定时发送则无需更新
-            botInfo.refreshTask(this.group)
+            val isOwnerOrAdmin = ((this.sender.id == botInfo.owner) || (this.sender.permission != MemberPermission.MEMBER))
 
             var message = this.message.serializeToMiraiCode()
             if (message.startsWith(at(this.bot.id))){
@@ -73,24 +74,27 @@ object Plugin : KotlinPlugin(
 
             if (message.startsWith(".") || message.startsWith("。")){
                 val msgList = message.split(" ")
-                val send = Messages.Command.receiveCommand(msgList, botInfo)
+                val send = Messages.Command.receiveCommand(msgList, botInfo, isOwnerOrAdmin, this.group)
                 if (send != null){
                     group.sendMessage(send)
                 }
             }
+
+            // 更新当前群组task，若为定时发送则无需更新
+            botInfo.refreshTask(this.group)
         }
 
-        /*
         // 好友消息事件
         eventChannel.subscribeAlways<FriendMessageEvent> {
             // 获取当前bot全部信息
             val botInfoIndex = getBotInfoIndexById(this.bot.id, botInfoList)
             val botInfo = botInfoList[botInfoIndex]
+            val isOwner = (botInfo.owner == this.friend.id)
 
             val message = this.message.serializeToMiraiCode()
             if (message.startsWith(".") || message.startsWith("。")){
                 val msgList = message.split(" ")
-                val send = Messages.Command.receiveCommand(msgList, botInfo)
+                val send = Messages.Command.receiveCommand(msgList, botInfo, isOwner, this.friend)
                 logger.info{ send.toString() }
                 if (send != null){
                     try{
@@ -102,7 +106,7 @@ object Plugin : KotlinPlugin(
                 }
             }
         }
-        */
+
         // 机器人加群事件
         eventChannel.subscribeAlways<BotJoinGroupEvent> {
 

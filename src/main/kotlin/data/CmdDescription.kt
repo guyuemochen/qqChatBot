@@ -3,7 +3,7 @@ package mirai.guyuemochen.chatbot.data
 class CmdDescription(
     val cmd: String,
     val description: String,
-    private val nextArgs: List<CmdDescription> = listOf(),
+    val nextArgs: List<CmdDescription> = listOf(),
 ){
     private val commandNotExist = "当前指令不存在"
 

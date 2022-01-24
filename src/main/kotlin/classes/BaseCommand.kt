@@ -2,6 +2,7 @@ package mirai.guyuemochen.chatbot.classes
 
 import mirai.guyuemochen.chatbot.data.BotInfo
 import mirai.guyuemochen.chatbot.data.CmdDescription
+import net.mamoe.mirai.contact.Contact
 
 open class BaseCommand {
 
@@ -11,6 +12,7 @@ open class BaseCommand {
     open val description: CmdDescription? = null
     open val errorCommand = "输入错误，请重新输入或查看help指令"
     open val commandNotExist = "当前指令不存在"
+    open val noPermission = "你当前权限部族"
 
     /**
      * 运行当前指令
@@ -20,7 +22,7 @@ open class BaseCommand {
      *
      * @return 返回指令反馈
      */
-    open fun runCommand(msgList: List<String>, botInfo: BotInfo): String {
+    open fun runCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String {
 
         if (msgList.size < minLength && minLength != -1){
             return errorCommand

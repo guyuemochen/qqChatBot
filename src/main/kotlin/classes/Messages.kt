@@ -2,6 +2,7 @@ package mirai.guyuemochen.chatbot.classes
 
 import mirai.guyuemochen.chatbot.classes.commands.*
 import mirai.guyuemochen.chatbot.data.BotInfo
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.Image
 import net.mamoe.mirai.message.data.buildMessageChain
 
@@ -37,10 +38,10 @@ object Messages {
             Random(),
         )
 
-        fun receiveCommand(msgList: List<String>, botInfo: BotInfo): String? {
+        fun receiveCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String? {
             for (command in commandClasses){
                 if (msgList[0] == ("." + command.cmd) || msgList[0] == ("。" + command.cmd)){
-                    return command.runCommand(msgList, botInfo)
+                    return command.runCommand(msgList, botInfo, isOwnerOrAdmin, friendOrGroup)
                 }
             }
 

@@ -3,6 +3,7 @@ package mirai.guyuemochen.chatbot.classes.commands
 import mirai.guyuemochen.chatbot.classes.BaseCommand
 import mirai.guyuemochen.chatbot.data.BotInfo
 import mirai.guyuemochen.chatbot.data.CmdDescription
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.buildMessageChain
 import kotlin.math.min
 
@@ -26,7 +27,7 @@ class Help: BaseCommand() {
      * @param msgList 拆分成List的指令
      * @return 返回反馈
      */
-    override fun runCommand(msgList: List<String>, botInfo: BotInfo): String  {
+    override fun runCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String  {
         val commandClasses: List<BaseCommand> = listOf(
             Help(),
             Owner(),

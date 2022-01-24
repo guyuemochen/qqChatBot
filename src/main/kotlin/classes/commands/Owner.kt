@@ -3,6 +3,7 @@ package mirai.guyuemochen.chatbot.classes.commands
 import mirai.guyuemochen.chatbot.classes.BaseCommand
 import mirai.guyuemochen.chatbot.data.BotInfo
 import mirai.guyuemochen.chatbot.data.CmdDescription
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.buildMessageChain
 
 class Owner: BaseCommand() {
@@ -15,7 +16,7 @@ class Owner: BaseCommand() {
         description=".owner 返回机器人主人信息"
     )
 
-    override fun runCommand(msgList: List<String>, botInfo: BotInfo): String{
+    override fun runCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String{
 
         if (checkCommandSize(msgList.size)){
 

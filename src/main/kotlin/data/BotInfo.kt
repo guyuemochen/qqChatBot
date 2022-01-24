@@ -210,6 +210,22 @@ class BotInfo(
     }
 
     /**
+     * 判断是否在群
+     *
+     * @param id 群id
+     *
+     * @return 是否在群
+     */
+    fun containGroup(id: Long): Boolean{
+        return findGroupIndexById(id, this.groupInfoList) != -1
+    }
+
+    fun changeGroupRandomTime(id: Long, time: Long){
+        val groupInfo = this.groupInfoList[findGroupIndexById(id, this.groupInfoList)]
+        groupInfo.randomDelay = time
+    }
+
+    /**
      * 从所有群信息中找到对应groupInfo的Index
      *
      * @param groupId 群号
