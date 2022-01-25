@@ -3,6 +3,7 @@ package mirai.guyuemochen.chatbot.data
 class CmdDescription(
     val cmd: String,
     val description: String,
+    val detailedDescription: String,
     val nextArgs: List<CmdDescription> = listOf(),
 ){
     private val commandNotExist = "当前指令不存在"
@@ -22,7 +23,7 @@ class CmdDescription(
 
     fun getDescription(depth: Int, msgList: List<String>): String{
         if (depth == 1){
-            return description
+            return detailedDescription
         }
         for (arg in nextArgs){
             if (arg.cmd == msgList[msgList.size - depth]){

@@ -10,10 +10,10 @@ class Owner: BaseCommand() {
 
     override val minLength: Int = 1
     override val maxLength: Int = 1
-    override val cmd: String = "owner"
     override val description = CmdDescription(
         cmd="owner",
-        description=".owner 返回机器人主人信息"
+        description="返回机器人主人信息",
+        detailedDescription="输入.owner 返回机器人主人信息"
     )
 
     override fun runCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String{

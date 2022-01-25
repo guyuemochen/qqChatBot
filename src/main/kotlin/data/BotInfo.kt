@@ -115,6 +115,9 @@ class BotInfo(
         checkGroups()
     }
 
+    /**
+     * 检查群组是否都进行储存
+     */
     private fun checkGroups(){
 
         for (group in bot.groups){
@@ -220,9 +223,53 @@ class BotInfo(
         return findGroupIndexById(id, this.groupInfoList) != -1
     }
 
-    fun changeGroupRandomTime(id: Long, time: Long){
-        val groupInfo = this.groupInfoList[findGroupIndexById(id, this.groupInfoList)]
+    /**
+     * 更改随机发图间隔时间
+     *
+     * @param groupId 群id
+     * @param time 更改后时间
+     */
+    fun changeGroupRandomTime(groupId: Long, time: Long){
+        val groupInfo = this.groupInfoList[findGroupIndexById(groupId, this.groupInfoList)]
+
         groupInfo.randomDelay = time
+        if (groupInfo.randomType == Constants.RandomType.repeatConstantDelay){
+            groupInfo.task?.cancel()
+            groupInfo.task= bot.getGroup(groupId)?.let { newTask(it) }
+            Timer().schedule(groupInfo.task, Date(), groupInfo.randomDelay)
+        }
+    }
+
+    /**
+     * 更改当前group的randomType并重置task
+     *
+     * @param groupId 群号
+     * @param newType 新的类型
+     *
+     * @return 运行状态
+     * 返回1：成功
+     * 返回-1：无需调整
+     * 返回-2：不存在该类型
+     */
+    fun changeRandomType(groupId: Long, newType: Int): Int{
+        val groupInfo = this.groupInfoList[findGroupIndexById(groupId, groupInfoList)]
+        if (groupInfo.randomType != newType){
+            groupInfo.randomType = newType
+            if(newType == Constants.RandomType.answerAfterDelay){
+                // 因为之后会直接cancel再重置所以不用可以填任何内容进来
+                return 1
+            }
+            else if(newType == Constants.RandomType.repeatConstantDelay){
+                groupInfo.task?.cancel()
+                groupInfo.task = bot.getGroup(groupId)?.let { newTask(it) }
+                Timer().schedule(groupInfo.task, Date(), groupInfo.randomDelay)
+                return 1
+            }
+
+            return -2
+        }
+
+        return -1
     }
 
     /**
@@ -262,7 +309,7 @@ class BotInfo(
      *
      * @return 设定好的task
      */
-    private fun newTask(group: Group): SendPic? {
+    private fun newTask(group: Group): SendPic {
         return SendPic(group, pluginPath)
     }
 
@@ -283,8 +330,15 @@ class BotInfo(
         var welcomeText: String,
     )
 
+    /**
+     * 基础task，定时发送图片
+     *
+     * @oaram group 选定群组
+     * @param pluginPath 当前插件文件储存地址
+     */
     class SendPic(private val group: Group, private val pluginPath: Path): TimerTask(){
 
+        @OptIn(DelicateCoroutinesApi::class)
         override fun run(){
 
             GlobalScope.launch{

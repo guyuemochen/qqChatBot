@@ -8,7 +8,6 @@ open class BaseCommand {
 
     open val minLength: Int = -1
     open val maxLength: Int = -1
-    open val cmd: String = ""
     open val description: CmdDescription? = null
     open val errorCommand = "输入错误，请重新输入或查看help指令"
     open val commandNotExist = "当前指令不存在"

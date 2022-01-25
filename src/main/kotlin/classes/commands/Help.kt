@@ -15,10 +15,10 @@ import kotlin.math.min
 class Help: BaseCommand() {
 
     override val minLength: Int = 1
-    override val cmd: String = "help"
     override val description = CmdDescription(
         cmd="help",
-        description=".help 查询指令用法"
+        description="查询指令用法",
+        detailedDescription="输入.help 查询指令用法",
     )
 
     /**
@@ -41,7 +41,7 @@ class Help: BaseCommand() {
             }
             else if (msgList.size > 1){
                 for (command in commandClasses){
-                    if (msgList[1] == command.cmd){
+                    if (msgList[1] == command.description?.cmd){
                         return command.help(msgList)
                     }
                 }
@@ -76,6 +76,7 @@ class Help: BaseCommand() {
         val commandClasses: List<BaseCommand> = listOf(
             Help(),
             Owner(),
+            Random(),
         )
         val pageSize: Int = commandClasses.size / 5 + 1
 
@@ -85,7 +86,7 @@ class Help: BaseCommand() {
         } else{
             for (index in (page - 1) * 5 until min(commandClasses.size, page * 5)){
                 val command: BaseCommand = commandClasses[index]
-                message = "${message}${command.cmd} ${command.description}\n"
+                message = "${message}${command.description?.cmd} ${command.description?.description}\n"
             }
 
             message += "page $page of $pageSize"
