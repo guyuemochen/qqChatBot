@@ -36,9 +36,10 @@ object Messages {
             Help(),
             Owner(),
             Random(),
+            BotStatus(),
         )
 
-        fun receiveCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String? {
+        fun receiveCommand(msgList: List<String>, botInfo: BotInfo, isOwnerOrAdmin: Boolean, friendOrGroup: Contact): String {
             for (command in commandClasses){
                 if (msgList[0] == ("." + command.description?.cmd) || msgList[0] == ("。" + command.description?.cmd)){
                     return command.runCommand(msgList, botInfo, isOwnerOrAdmin, friendOrGroup)

@@ -4,7 +4,6 @@ import mirai.guyuemochen.chatbot.classes.BaseCommand
 import mirai.guyuemochen.chatbot.data.BotInfo
 import mirai.guyuemochen.chatbot.data.CmdDescription
 import net.mamoe.mirai.contact.Contact
-import net.mamoe.mirai.message.data.buildMessageChain
 import kotlin.math.min
 
 /**
@@ -32,6 +31,7 @@ class Help: BaseCommand() {
             Help(),
             Owner(),
             Random(),
+            BotStatus(),
         )
 
         if (checkCommandSize(msgList.size)){
@@ -45,16 +45,14 @@ class Help: BaseCommand() {
                         return command.help(msgList)
                     }
                 }
-                try{
+                return try{
                     if (msgList.size == 2){
-                        buildMessageChain { listAllCommands(msgList[1].toInt()) }
+                        listAllCommands(msgList[1].toInt())
+                    } else{
+                        errorCommand
                     }
-                    else{
-                        return errorCommand
-                    }
-                }
-                catch (e: NumberFormatException){
-                    return errorCommand
+                } catch (e: NumberFormatException){
+                    errorCommand
                 }
 
             }
@@ -77,6 +75,7 @@ class Help: BaseCommand() {
             Help(),
             Owner(),
             Random(),
+            BotStatus(),
         )
         val pageSize: Int = commandClasses.size / 5 + 1
 

@@ -202,7 +202,10 @@ class BotInfo(
 
         val groupInfoIndex = findGroupIndexById(group.id, this.groupInfoList)
         val groupInfo = this.groupInfoList[groupInfoIndex]
-        if (groupInfo.randomType == Constants.RandomType.answerAfterDelay){
+        if (groupInfo.status == Constants.BotStatus.off){
+            groupInfo.task?.cancel()
+        }
+        else if (groupInfo.randomType == Constants.RandomType.answerAfterDelay){
             // 取消当前任务
             groupInfo.task?.cancel()
             // 添加新的任务
@@ -217,10 +220,46 @@ class BotInfo(
      *
      * @param id 群id
      *
-     * @return 是否在群
+     * @return true为在群中，false为不在当前群
      */
     fun containGroup(id: Long): Boolean{
         return findGroupIndexById(id, this.groupInfoList) != -1
+    }
+
+    /**
+     * 更改bot在当前群中的状态
+     *
+     * @param id 当前的群id
+     * @param status 更改后的状态
+     *
+     * @return -1 当前群不存在；-2 status重复；-3 status错误；1 更改成开启状态；2 更改成关闭状态
+     */
+    fun changeBotStatus(id: Long, status: String): Int{
+
+        if (!containGroup(id)){
+            return -1
+        }
+        val groupInfoIndex = findGroupIndexById(id, groupInfoList)
+        val groupInfo = groupInfoList[groupInfoIndex]
+
+        if (status == "on" && groupInfo.status == Constants.BotStatus.on){
+            return -2
+        }
+        else if(status == "off" && groupInfo.status == Constants.BotStatus.off){
+            return -2
+        }
+        else if(status == "on"){
+            groupInfo.status = Constants.BotStatus.on
+            return 1
+        }
+        else if(status == "off"){
+            groupInfo.status = Constants.BotStatus.off
+            return 2
+        }
+        else{
+            return -3
+        }
+
     }
 
     /**
@@ -320,6 +359,7 @@ class BotInfo(
      * @param task 定时发阿宋消息的任务
      * @param randomDelay 防冷群延迟
      * @param randomType 防冷群类型
+     * @param status bot状态
      */
     class GroupInfo(
         val id: Long,
