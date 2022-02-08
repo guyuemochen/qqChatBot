@@ -12,7 +12,6 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import mirai.guyuemochen.chatbot.classes.Constants
 import mirai.guyuemochen.chatbot.classes.Messages
 import mirai.guyuemochen.chatbot.data.BotInfo
-import net.mamoe.mirai.console.util.ContactUtils.getFriendOrGroup
 import net.mamoe.mirai.contact.MemberPermission
 import net.mamoe.mirai.event.events.*
 
@@ -74,9 +73,11 @@ object Plugin : KotlinPlugin(
 
             if (message.startsWith(".") || message.startsWith("。")){
                 val msgList = message.split(" ")
-                val send = Messages.Command.receiveCommand(msgList, botInfo, isOwnerOrAdmin, this.group)
-                if (send != null){
-                    group.sendMessage(send)
+                if (testIsCommand(msgList[0])){
+                    val send = Messages.Command.receiveCommand(msgList, botInfo, isOwnerOrAdmin, this.group)
+                    if (send != null){
+                        group.sendMessage(send)
+                    }
                 }
             }
 
@@ -93,7 +94,8 @@ object Plugin : KotlinPlugin(
 
             val message = this.message.serializeToMiraiCode()
             if (message.startsWith(".") || message.startsWith("。")){
-                val msgList = message.split(" ")
+                val msgList = message.split(" ").toMutableList()
+
                 val send = Messages.Command.receiveCommand(msgList, botInfo, isOwner, this.friend)
                 logger.info{ send.toString() }
                 if (send != null){
@@ -200,5 +202,24 @@ object Plugin : KotlinPlugin(
             }
         }
         return -1
+    }
+
+    private fun testIsCommand(cmd: String): Boolean{
+        val num = countChar(cmd, '.') + countChar(cmd, '。')
+        if (num == cmd.length){
+            return false
+        }
+        return true
+    }
+
+    private fun countChar(cmd: String, target: Char): Int{
+        var count = 0
+        for (char in cmd){
+            if (char == target){
+                count++
+            }
+        }
+
+        return count
     }
 }
